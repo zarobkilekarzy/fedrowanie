@@ -42,13 +42,19 @@ export async function run({ dbPath, monitoring, concurrency = 4 }) {
   }, (d, tt) => process.stdout.write(`\r  ${d}/${tt}`));
   console.log('');
 
-  let saved = 0;
+  let saved = 0, thin = 0;
   tx(db, () => {
-    for (const r of results) if (r) { up.run(r.pk, r.text, r.chars, r.mod, now()); saved++; }
+    for (const r of results) if (r) { up.run(r.pk, r.text, r.chars, r.mod, now()); saved++; if (r.chars < 200) thin++; }
   });
 
   console.log('══ Strony spraw ══');
   console.log('  zapisane w tym biegu:', saved);
   console.log('  łącznie w bazie:     ', db.prepare('SELECT COUNT(*) n FROM case_pages').get().n);
+  // Sygnał kruchości: `pages` opiera się na strukturze HTML Federa. Gdy prawie nic nie
+  // wyszło, to zwykle znak, że strona się zmieniła (a nie że spraw brak treści).
+  if (saved > 0 && thin / saved > 0.5) {
+    console.log(`\n⚠ ${thin}/${saved} stron ma <200 znaków — możliwe, że HTML Federa się zmienił`);
+    console.log('  (patrz src/html.mjs: znacznik "class=content" / iframe srcdoc).');
+  }
   db.close();
 }

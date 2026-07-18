@@ -20,6 +20,7 @@ try {
 const HELP = `fedrowanie — pobiera monitoringi Sieci Obywatelskiej Watchdog (Feder) do bazy SQLite.
 
 Użycie:
+  fedrowanie list [fraza]        Wypisz dostępne monitoringi (opcjonalnie filtruj po nazwie)
   fedrowanie sync <monitoring>   Pobierz sprawy, instytucje i listy monitoringu (inkrementalnie)
   fedrowanie pages               Pobierz teksty stron spraw (treść + OCR załączników)
   fedrowanie stats               Pokaż lejek odpowiedzi, geografię i skalę wysiłku
@@ -61,10 +62,11 @@ if (opts.version) {
 const command = positional.shift();
 if (opts.help || !command) { console.log(HELP); process.exit(command ? 0 : (opts.help ? 0 : 1)); }
 
-const COMMANDS = { sync: 'sync', pages: 'pages', stats: 'stats' };
+const COMMANDS = { list: 'list', sync: 'sync', pages: 'pages', stats: 'stats' };
 if (!COMMANDS[command]) { console.error('Nieznana komenda:', command, '\n\n' + HELP); process.exit(2); }
 
 opts.dbPath ??= process.env.FEDR_DB || './fedrowanie.db';
+if (command === 'list') opts.filter = positional[0];
 if (command === 'sync' && opts.monitoring == null && positional[0] != null) {
   opts.monitoring = Number(positional[0]);
 }

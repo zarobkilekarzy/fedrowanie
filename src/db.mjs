@@ -136,7 +136,7 @@ const CAT_RANK = { A: 6, C: 5, B: 4, E: 3, other: 2, G: 1, receipt: 0 };
 //  A = odpowiedź z danymi, B = odmowa, C = inna odpowiedź (np. przedłużenie terminu),
 //  D = potwierdzenie doręczenia/otwarcia, E = inna instytucja, G = nieustalona.
 // Poza tym: 'other' = realna odpowiedź, której AI nie ocenił; 'receipt' = auto-potwierdzenie.
-function letterCategory(ai, title) {
+export function letterCategory(ai, title) {
   ai = ai || '';
   const m = /^([A-G])\)/.exec(ai);
   if (m) return m[1] === 'D' ? 'receipt' : (['A', 'B', 'C', 'E', 'G'].includes(m[1]) ? m[1] : 'other');

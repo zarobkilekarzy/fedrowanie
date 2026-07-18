@@ -17,5 +17,6 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: npm run check       # składnia wszystkich modułów
+      - run: npm test            # testy jednostkowe (node:test, bez sieci)
       - run: node bin/fedrowanie.mjs --help
       - run: node bin/fedrowanie.mjs --version

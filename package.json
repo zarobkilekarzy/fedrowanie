@@ -12,7 +12,8 @@
   "scripts": {
     "start": "node bin/fedrowanie.mjs",
     "help": "node bin/fedrowanie.mjs --help",
-    "check": "find bin src examples -name '*.mjs' -print0 | xargs -0 -n1 node --check"
+    "check": "find bin src examples test -name '*.mjs' -print0 | xargs -0 -n1 node --check",
+    "test": "node --experimental-sqlite --test"
   },
   "files": [
     "bin",
