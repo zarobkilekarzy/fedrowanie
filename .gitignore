@@ -1,0 +1,23 @@
+# zależności
+node_modules/
+
+# bazy SQLite (dane pobrane z Federa — nie trzymamy ich w repo)
+*.db
+*.db-wal
+*.db-shm
+
+# lokalne pliki operacyjne i klucze — nie do publikacji
+.ops/
+*.pem
+
+# konfiguracja agenta / proces wydania — lokalne, nie do publikacji
+CLAUDE.md
+.claude/
+
+# środowisko
+.env
+.env.*
+
+# system
+.DS_Store
+*.log

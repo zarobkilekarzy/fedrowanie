@@ -1,0 +1,43 @@
+{
+  "name": "fedrowanie",
+  "version": "1.0.0",
+  "description": "Pobiera monitoringi Sieci Obywatelskiej Watchdog (Feder) do lokalnej bazy SQLite.",
+  "type": "module",
+  "bin": {
+    "fedrowanie": "bin/fedrowanie.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node bin/fedrowanie.mjs",
+    "help": "node bin/fedrowanie.mjs --help",
+    "check": "find bin src examples -name '*.mjs' -print0 | xargs -0 -n1 node --check"
+  },
+  "files": [
+    "bin",
+    "src",
+    "examples",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "watchdog",
+    "feder",
+    "foia",
+    "informacja-publiczna",
+    "jawnosc",
+    "open-data",
+    "sqlite",
+    "poland"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zarobkilekarzy/fedrowanie.git"
+  },
+  "homepage": "https://github.com/zarobkilekarzy/fedrowanie#readme",
+  "bugs": {
+    "url": "https://github.com/zarobkilekarzy/fedrowanie/issues"
+  }
+}
