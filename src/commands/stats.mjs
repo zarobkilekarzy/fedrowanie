@@ -33,7 +33,7 @@ export function run({ dbPath, monitoring }) {
   const LAB = [
     ['A', 'odpowiedź z danymi'], ['B', 'WPROST ODMÓWIŁO'],
     ['C', 'inna odpowiedź (np. gra na czas)'], ['E', 'odesłanie do innej instytucji'],
-    ['G', 'nieustalona'],
+    ['G', 'nieustalona'], ['other', 'odpowiedź bez oceny AI'],
   ];
   console.log(`  wniosków:                       ${String(TOT).padStart(5)}`);
   console.log(`  cisza (brak merytorycznej odp.):${String(silent).padStart(5)}  (${pct(silent, TOT)})`);

@@ -62,11 +62,19 @@ Komenda `pages` wyciąga stamtąd tekst — bez logowania i bez pobierania binar
 C = inna odpowiedź, E = inna instytucja, G = nieustalona). Pole `is_spam` Federa jest
 zawodne (miesza potwierdzenia z realnymi odpowiedziami) i nie używamy go jako filtra.
 
-## Analizy domenowe
+## Analizy i zapytania
 
-Rdzeń pobiera dane; interpretację konkretnego tematu dokładasz osobnym skryptem na tej samej
-bazie. Przykład dla monitoringu wynagrodzeń: [`examples/lekarze`](examples/lekarze) — parser
-tabel per-osoba i heurystyczne wyłuskiwanie kwot.
+Rdzeń pobiera dane; interpretację konkretnego tematu dokładasz osobnym skryptem lub zapytaniem
+na tej samej bazie.
+
+- [`examples/queries.sql`](examples/queries.sql) — gotowe zapytania **uniwersalne** (lejek
+  odpowiedzi, geografia, czas reakcji, ponaglenia, opłaty, wyszukiwarka pełnotekstowa).
+- [`examples/lekarze`](examples/lekarze) — przykład **domenowy** dla monitoringu wynagrodzeń:
+  parser tabel per-osoba, heurystyka kwot i [zapytania o płace](examples/lekarze/queries.sql).
+
+```sh
+sqlite3 fedrowanie.db < examples/queries.sql
+```
 
 ## Uczciwe użycie
 

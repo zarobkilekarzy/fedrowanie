@@ -31,8 +31,10 @@ function fragToText(h) {
 
 export function htmlToText(html) {
   let s = html;
-  const ci = s.indexOf('class="content"'); if (ci > 0) s = s.slice(ci);
-  const fi = s.indexOf('class="footer"');  if (fi > 0) s = s.slice(0, fi);
+  // Zawęź do bloku treści; tnij od KOŃCA otwierającego tagu, by nie zostawić „class=…>".
+  const ci = s.indexOf('class="content"');
+  if (ci > 0) { const gt = s.indexOf('>', ci); s = s.slice(gt > 0 ? gt + 1 : ci); }
+  const fi = s.indexOf('class="footer"'); if (fi > 0) s = s.slice(0, fi);
   const parts = [];
   // 1) treść w iframe srcdoc (e-maile + OCR załączników),
   for (const m of s.matchAll(/srcdoc="([^"]*)"/gi)) parts.push(fragToText(decodeEntities(m[1])));

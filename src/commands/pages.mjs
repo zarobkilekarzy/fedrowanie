@@ -14,16 +14,17 @@ const now = () => new Date().toISOString();
 export async function run({ dbPath, monitoring, concurrency = 4 }) {
   const db = openDb(dbPath);
 
-  // Strony pobieramy dla spraw merytorycznych (jest odpowiedź do odczytania).
+  // Strony pobieramy dla spraw, w których przyszła odpowiedź (jest co czytać). Kryterium
+  // response_received jest uniwersalne — obejmuje też odpowiedzi bez oceny AI (kat. 'other').
   const monFilter = Number.isInteger(monitoring) ? 'AND c.monitoring = ?' : '';
   const params = Number.isInteger(monitoring) ? [monitoring] : [];
   const targets = db.prepare(`
     SELECT c.pk, c.slug, c.modified
     FROM cases c
     LEFT JOIN case_pages p ON p.case_pk = c.pk
-    WHERE c.answer_category IN ('A','B','C','G') ${monFilter}
+    WHERE c.response_received = 1 ${monFilter}
       AND (p.case_pk IS NULL OR p.case_modified IS NOT c.modified)`).all(...params);
-  console.log('› Strony spraw do pobrania: %d (merytoryczne A/B/C/G)', targets.length);
+  console.log('› Strony spraw do pobrania: %d (sprawy z odpowiedzią)', targets.length);
   if (!targets.length) { db.close(); return; }
 
   const up = db.prepare(`INSERT INTO case_pages (case_pk,text,chars,case_modified,fetched_at)

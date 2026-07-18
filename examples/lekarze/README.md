@@ -24,3 +24,15 @@ własne tabele. Idempotentne — przeliczają od zera przy każdym biegu.
 
 Formaty niejednoznaczne (inicjały + składniki w wielu wierszach) trafiają do `salaries`
 z `money_cells > 1` — te trzeba obejrzeć ręcznie przed jakimkolwiek użyciem.
+
+## Gotowe zapytania
+
+[`queries.sql`](queries.sql) — rozkład płac (kwantyle), progi (ilu ≥ 500k/1 mln), podział wg
+typu umowy, nierówności w jednej placówce, rekordy, mediana per województwo:
+
+```sh
+sqlite3 fedrowanie.db < examples/lekarze/queries.sql
+```
+
+Uniwersalne zapytania na tabelach rdzenia (lejek, geografia, czas reakcji, opłaty) są
+w [`../queries.sql`](../queries.sql).

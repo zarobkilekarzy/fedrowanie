@@ -124,25 +124,41 @@ export const setMeta = (db, key, value) =>
   db.prepare('INSERT INTO meta(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value')
     .run(key, String(value));
 
-// Klasyfikacja sprawy po najlepszej ocenie AI Federa wśród listów przychodzących.
-// Kody Federa: A = odpowiedź z danymi, B = odmowa, C = inna odpowiedź (np. przedłużenie
-// terminu), D = potwierdzenie doręczenia/otwarcia, E = inna instytucja, G = nieustalone.
-// Uwaga: pole is_spam Federa jest bezużyteczne jako filtr (miesza potwierdzenia z realnymi
-// odpowiedziami) — klasyfikujemy wyłącznie po ai_evaluation. Idempotentne, bez sieci.
+// Tematy automatycznych potwierdzeń (MDN / read-receipt / autoreply). Potrzebne, gdy Feder
+// nie nadał oceny AI — starsze monitoringi mają ai_evaluation puste, a is_spam ustawione na
+// wszystkim (i na potwierdzeniach, i na realnych odpowiedziach), więc jako filtr bezużyteczne.
+const RECEIPT_SUBJECT = /^(re:\s*)?(read:|not read:|delivered:|delivery\b|undeliverable:|automatic reply|out of office|auto[- ]?reply|przeczyta|nieprzeczyta|nie przeczyt|odczytano|nie odczytano|dostarczono\b|niedostarczono|zwrotne potwierdzenie|potwierdzenie (odczytu|dostarczenia|doręczenia)|automatyczna odpowiedź|wiadomość automatyczna)/i;
+
+// Priorytet kategorii w obrębie sprawy (bierzemy najlepszą z listów przychodzących).
+const CAT_RANK = { A: 6, C: 5, B: 4, E: 3, other: 2, G: 1, receipt: 0 };
+
+// Kategoria pojedynczego listu przychodzącego. Kody z oceny AI Federa:
+//  A = odpowiedź z danymi, B = odmowa, C = inna odpowiedź (np. przedłużenie terminu),
+//  D = potwierdzenie doręczenia/otwarcia, E = inna instytucja, G = nieustalona.
+// Poza tym: 'other' = realna odpowiedź, której AI nie ocenił; 'receipt' = auto-potwierdzenie.
+function letterCategory(ai, title) {
+  ai = ai || '';
+  const m = /^([A-G])\)/.exec(ai);
+  if (m) return m[1] === 'D' ? 'receipt' : (['A', 'B', 'C', 'E', 'G'].includes(m[1]) ? m[1] : 'other');
+  // Feder wprost pomija ocenę AI dla wiadomości automatycznych — to potwierdzenia, nie odpowiedzi.
+  if (/pomini[ęe]ta|automatyczn/i.test(ai)) return 'receipt';
+  return RECEIPT_SUBJECT.test((title || '').trim()) ? 'receipt' : 'other';
+}
+
+// Klasyfikacja spraw po listach przychodzących. Działa dla dowolnego monitoringu: gdy jest
+// ocena AI Federa, używamy jej; gdy jej nie ma, rozpoznajemy potwierdzenia po temacie, a
+// pozostałe realne odpowiedzi lądują w 'other'. Idempotentne, bez sieci.
 export function reclassify(db) {
-  db.exec("UPDATE cases SET answer_category='none', response_received=0");
-  db.exec(`
-    UPDATE cases SET
-      response_received = 1,
-      answer_category = (
-        SELECT CASE MAX(CASE
-            WHEN l.ai_evaluation LIKE 'A)%' THEN 5 WHEN l.ai_evaluation LIKE 'C)%' THEN 4
-            WHEN l.ai_evaluation LIKE 'B)%' THEN 3 WHEN l.ai_evaluation LIKE 'E)%' THEN 2
-            WHEN l.ai_evaluation LIKE 'G)%' THEN 1 ELSE 0 END)
-          WHEN 5 THEN 'A' WHEN 4 THEN 'C' WHEN 3 THEN 'B'
-          WHEN 2 THEN 'E' WHEN 1 THEN 'G' ELSE 'receipt' END
-        FROM letters l WHERE l.case_pk = cases.pk AND l.is_incoming = 1)
-    WHERE EXISTS (SELECT 1 FROM letters l WHERE l.case_pk = cases.pk AND l.is_incoming = 1);`);
-  // Samo potwierdzenie doręczenia to nie odpowiedź merytoryczna.
-  db.exec("UPDATE cases SET response_received = 0 WHERE answer_category IN ('receipt','none')");
+  const rows = db.prepare('SELECT case_pk, ai_evaluation, title FROM letters WHERE is_incoming=1').all();
+  const best = new Map();
+  for (const r of rows) {
+    const cat = letterCategory(r.ai_evaluation, r.title);
+    const cur = best.get(r.case_pk);
+    if (cur === undefined || CAT_RANK[cat] > CAT_RANK[cur]) best.set(r.case_pk, cat);
+  }
+  const upd = db.prepare('UPDATE cases SET answer_category=?, response_received=? WHERE pk=?');
+  tx(db, () => {
+    db.exec("UPDATE cases SET answer_category='none', response_received=0");
+    for (const [pk, cat] of best) upd.run(cat, cat === 'receipt' ? 0 : 1, pk);
+  });
 }
